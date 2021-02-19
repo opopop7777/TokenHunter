@@ -1,4 +1,3 @@
-# expData
 
 ## directory structure
 
@@ -36,13 +35,13 @@
 ## Description
 * `Plugins`:results of five plugins
  * `Fake Deposit`:tokens with fake Deposit
-    - * `fake_deposit_addr_list`：all addresses that are not unique
-    - * `fake_deposit_addr_opensource_list`：all open source addresses that are not unique
-    - * `fake_deposit_addr_opensource_unique`：all open source addresses that are unique
-    - * `fake_deposit_hash_list`：hash list of unique
+    - `fake_deposit_addr_list`：all addresses that are not unique
+    - `fake_deposit_addr_opensource_list`：all open source addresses that are not unique
+    - `fake_deposit_addr_opensource_unique`：all open source addresses that are unique
+    - `fake_deposit_hash_list`：hash list of unique
  * Fake Notification`: tokens with fake notifications
-    - * ` fake_notification_addr `：all addresses of tokens with fake notifications
-    - * `fake_notification_opensource_addr`：opensource addresses of tokens with fake notifications
+    - `fake_notification_addr `：all addresses of tokens with fake notifications
+    - `fake_notification_opensource_addr`：opensource addresses of tokens with fake notifications
  * `Misleading DEX Attacks.xlsx`：the result of plugin Misleading DEX Attacks
  * `Inconsistent transferFrom().xlsx `：the result of plugin Inconsistent transferFrom()
  * `Unauthorized Token Burning.xlsx`：the result of plugin Unauthorized Token Burning
