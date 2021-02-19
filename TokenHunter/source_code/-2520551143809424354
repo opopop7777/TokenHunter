@@ -1,0 +1,25 @@
+{{
+  "language": "Solidity",
+  "settings": {
+    "optimizer": {
+      "enabled": false
+    },
+    "metadata": {
+      "bytecodeHash": "ipfs"
+    },
+    "outputSelection": {
+      "*": {
+        "*": [
+          "evm.bytecode",
+          "evm.deployedBytecode",
+          "abi"
+        ]
+      }
+    }
+  },
+  "sources": {
+    "test.sol": {
+      "content": "pragma solidity ^0.6.0;\r\n\r\ncontract shortContract123456789 {\r\n    \r\n    fallback() external { }\r\n    \r\n}"
+    }
+  }
+}}

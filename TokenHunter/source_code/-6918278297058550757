@@ -1,0 +1,9 @@
+pragma solidity ^0.5.6;
+
+contract Empty {
+    address owner;
+
+    constructor () public {
+        owner = msg.sender;
+    }
+}

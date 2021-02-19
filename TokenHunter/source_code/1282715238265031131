@@ -1,0 +1,10 @@
+pragma solidity >=0.4.22 <0.6.0;
+contract ConstructorTest {
+    uint256 dummyA;
+    uint256 dummyB;
+    
+    constructor() public {
+        dummyA = 123;
+        dummyB = 456;
+    }
+}

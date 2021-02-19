@@ -1,0 +1,5 @@
+pragma solidity >= 0.5.1;
+contract WtcErc20Destroy {
+    constructor() public {
+    }
+}

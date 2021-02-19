@@ -1,0 +1,11 @@
+pragma solidity ^0.5.12;
+    //This is the official Happy Face Place.
+    //You can send ChainFaces to this contract, but nobody will ever be able retrieve them.
+    //No, not even Zoma
+    
+contract HappyFacePlace {
+    //This contract does nothing whatsoever.
+    function HappyPlace() public {
+        //The chainfaces in this contract will be hodled and happy forever.
+    }
+}

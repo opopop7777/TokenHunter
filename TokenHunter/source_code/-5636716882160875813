@@ -1,0 +1,266 @@
+/**
+Author: Loopring Foundation (Loopring Project Ltd)
+*/
+
+pragma solidity ^0.5.11;
+
+
+contract Ownable {
+    address public owner;
+
+    event OwnershipTransferred(
+        address indexed previousOwner,
+        address indexed newOwner
+    );
+
+    
+    
+    constructor()
+        public
+    {
+        owner = msg.sender;
+    }
+
+    
+    modifier onlyOwner()
+    {
+        require(msg.sender == owner, "UNAUTHORIZED");
+        _;
+    }
+
+    
+    
+    
+    function transferOwnership(
+        address newOwner
+        )
+        public
+        onlyOwner
+    {
+        require(newOwner != address(0), "ZERO_ADDRESS");
+        emit OwnershipTransferred(owner, newOwner);
+        owner = newOwner;
+    }
+
+    function renounceOwnership()
+        public
+        onlyOwner
+    {
+        emit OwnershipTransferred(owner, address(0));
+        owner = address(0);
+    }
+}
+
+contract Claimable is Ownable
+{
+    address public pendingOwner;
+
+    
+    modifier onlyPendingOwner() {
+        require(msg.sender == pendingOwner, "UNAUTHORIZED");
+        _;
+    }
+
+    
+    
+    function transferOwnership(
+        address newOwner
+        )
+        public
+        onlyOwner
+    {
+        require(newOwner != address(0) && newOwner != owner, "INVALID_ADDRESS");
+        pendingOwner = newOwner;
+    }
+
+    
+    function claimOwnership()
+        public
+        onlyPendingOwner
+    {
+        emit OwnershipTransferred(owner, pendingOwner);
+        owner = pendingOwner;
+        pendingOwner = address(0);
+    }
+}
+
+library MathUint {
+    function mul(
+        uint a,
+        uint b
+        )
+        internal
+        pure
+        returns (uint c)
+    {
+        c = a * b;
+        require(a == 0 || c / a == b, "MUL_OVERFLOW");
+    }
+
+    function sub(
+        uint a,
+        uint b
+        )
+        internal
+        pure
+        returns (uint)
+    {
+        require(b <= a, "SUB_UNDERFLOW");
+        return a - b;
+    }
+
+    function add(
+        uint a,
+        uint b
+        )
+        internal
+        pure
+        returns (uint c)
+    {
+        c = a + b;
+        require(c >= a, "ADD_OVERFLOW");
+    }
+
+    function decodeFloat(
+        uint f
+        )
+        internal
+        pure
+        returns (uint value)
+    {
+        uint numBitsMantissa = 23;
+        uint exponent = f >> numBitsMantissa;
+        uint mantissa = f & ((1 << numBitsMantissa) - 1);
+        value = mantissa * (10 ** exponent);
+    }
+}
+
+contract IDowntimeCostCalculator {
+    
+    
+    
+    
+    
+    
+    
+    function getDowntimeCostLRC(
+        uint  totalTimeInMaintenanceSeconds,
+        uint  totalDEXLifeTimeSeconds,
+        uint  numDowntimeMinutes,
+        uint  exchangeStakedLRC,
+        uint  durationToPurchaseMinutes
+        )
+        external
+        view
+        returns (uint cost);
+}
+
+contract DowntimeCostCalculator is Claimable, IDowntimeCostCalculator
+{
+    using MathUint for uint;
+
+    uint public basePricePerMinute;
+    uint public maxPenalty;
+    uint public gracePeriodsMinutes;
+    uint public gracePeriodPricePerMinute;
+    uint public maxAwailableDowntimeMinutes;
+
+    event SettingsUpdated(
+        uint oldBasePricePerMinute,
+        uint oldMaxPenalty,
+        uint oldGracePeriodMinutes,
+        uint oldGracePeriodPricePerMinute,
+        uint oldMaxAwailableDowntimeMinutes
+    );
+
+    constructor() Claimable() public {}
+
+    function getDowntimeCostLRC(
+        uint  totalTimeInMaintenanceSeconds,
+        uint  totalDEXLifeTimeSeconds,
+        uint  numDowntimeMinutes,
+        uint  ,
+        uint  durationToPurchaseMinutes
+        )
+        external
+        view
+        returns (uint)
+    {
+        uint newCost = getTotalCost(
+            totalTimeInMaintenanceSeconds,
+            totalDEXLifeTimeSeconds,
+            numDowntimeMinutes.add(durationToPurchaseMinutes)
+        );
+
+        uint oldCost = getTotalCost(
+            totalTimeInMaintenanceSeconds,
+            totalDEXLifeTimeSeconds,
+            numDowntimeMinutes
+        );
+
+        return newCost > oldCost ? newCost - oldCost : 0;
+    }
+
+    function updateSettings(
+        uint _basePricePerMinute,
+        uint _maxPenalty,
+        uint _gracePeriodsMinutes,
+        uint _gracePeriodPricePerMinute,
+        uint _maxAvailableDowntimeMinutes
+        )
+        external
+        onlyOwner
+    {
+        require(
+            _basePricePerMinute > 0 &&
+            _maxPenalty > 0 &&
+            _gracePeriodPricePerMinute > 0 &&
+            _maxAvailableDowntimeMinutes > 0,
+            "ZERO_VALUE"
+        );
+        require(_gracePeriodPricePerMinute <= _basePricePerMinute, "INVALID_PRICE");
+
+        emit SettingsUpdated(
+            basePricePerMinute,
+            maxPenalty,
+            gracePeriodsMinutes,
+            gracePeriodPricePerMinute,
+            maxAwailableDowntimeMinutes
+        );
+
+        basePricePerMinute = _basePricePerMinute;
+        maxPenalty = _maxPenalty;
+        gracePeriodsMinutes = _gracePeriodsMinutes;
+        gracePeriodPricePerMinute = _gracePeriodPricePerMinute;
+        maxAwailableDowntimeMinutes = _maxAvailableDowntimeMinutes;
+    }
+
+    function getTotalCost(
+        uint totalTimeInMaintenanceSeconds,
+        uint totalDEXLifeTimeSeconds,
+        uint downtimeMinutes
+        )
+        private
+        view
+        returns (uint)
+    {
+        require(downtimeMinutes <= maxAwailableDowntimeMinutes, "PURCHASE_PROHIBITED");
+        uint totalMinutes = downtimeMinutes.add(totalTimeInMaintenanceSeconds / 60);
+
+        if (totalMinutes <= gracePeriodsMinutes) {
+            return totalMinutes.mul(gracePeriodPricePerMinute);
+        }
+
+        uint timeBeyondGracePeriodMinutes = totalMinutes - gracePeriodsMinutes;
+        uint penalty = timeBeyondGracePeriodMinutes.mul(600000) / totalDEXLifeTimeSeconds + 100;
+        uint _maxPenalty = maxPenalty.mul(100);
+
+        if (penalty > _maxPenalty) {
+            penalty = _maxPenalty;
+        }
+
+        return gracePeriodsMinutes.mul(gracePeriodPricePerMinute).add(
+            timeBeyondGracePeriodMinutes.mul(basePricePerMinute).mul(penalty) / 100
+        );
+    }
+}

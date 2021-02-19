@@ -1,0 +1,158 @@
+pragma solidity ^0.4.18;
+
+// ----------------------------------------------------------------------------
+// 'Cryptovirology Token' Token Contract
+//
+// Deployed To : 0xee8a2ecd3f7edadc01ccf0731111c294b883f60e
+// Symbol      : CRY
+// Name        : Cryptovirology Token
+// Total Supply: 200,000,000,000,000 CRY
+// Decimals    : 18
+// Description : Cryptovirology Token (CRY) is a utility token, which should be used to develop the solutions and countermeasures of problems related with CRYptoviruses. It will support other activities of CRYptovirological field e.g. It will be used to create awareness among the people about the online payment frauds One of missions of this token is to create a database to store the information about malware and CRYptovirology advancements. It should be donated to institutes, researchers as well as other organizations to carry work for CRYptovirological solutions. This token will be also used to exchange the services, suggestions, apps and goods in the field of CRYptovirology throughout the world so that computer applications can be safe for user and fastest assistance can be provided to solve the problems related to ctyptoviruses. This token can be used to honour the persons and organizations working to create extra ordinary CRYptovirology solutions. It can be used to promote blogs, conferences, research articles and other activities in the field of CRYptovirology. Cryptovirology Token, where the users can donate this token as rewards. It should be used to source the services or solutions to solve the problems like frauds throughout the world as an important preventive measurement so that CRYptoviruses should be neutralized as early as possible. This token is to be used to develop advance warning system for CRYptovirological threats as well as providing the support to CRYptovirological community. One should not forget that CRYptovirological issues are of very complex in nature and may need a high degree of knowledge and investment to be solved.
+//
+// (c) By 'Cryptovirology Token' With 'CRY' Symbol 2019.
+//
+// ----------------------------------------------------------------------------
+
+
+contract SafeMath {
+    function safeAdd(uint a, uint b) public pure returns (uint c) {
+        c = a + b;
+        require(c >= a);
+    }
+    function safeSub(uint a, uint b) public pure returns (uint c) {
+        require(b <= a);
+        c = a - b;
+    }
+    function safeMul(uint a, uint b) public pure returns (uint c) {
+        c = a * b;
+        require(a == 0 || c / a == b);
+    }
+    function safeDiv(uint a, uint b) public pure returns (uint c) {
+        require(b > 0);
+        c = a / b;
+    }
+}
+
+
+contract ERC20Interface {
+    function totalSupply() public constant returns (uint);
+    function balanceOf(address tokenOwner) public constant returns (uint balance);
+    function allowance(address tokenOwner, address spender) public constant returns (uint remaining);
+    function transfer(address to, uint tokens) public returns (bool success);
+    function approve(address spender, uint tokens) public returns (bool success);
+    function transferFrom(address from, address to, uint tokens) public returns (bool success);
+
+    event Transfer(address indexed from, address indexed to, uint tokens);
+    event Approval(address indexed tokenOwner, address indexed spender, uint tokens);
+}
+
+
+contract ApproveAndCallFallBack {
+    function receiveApproval(address from, uint256 tokens, address token, bytes data) public;
+}
+
+
+contract Owned {
+    address public owner;
+    address public newOwner;
+
+    event OwnershipTransferred(address indexed _from, address indexed _to);
+
+    function Owned() public {
+        owner = msg.sender;
+    }
+
+    modifier onlyOwner {
+        require(msg.sender == owner);
+        _;
+    }
+
+    function transferOwnership(address _newOwner) public onlyOwner {
+        newOwner = _newOwner;
+    }
+    function acceptOwnership() public {
+        require(msg.sender == newOwner);
+        OwnershipTransferred(owner, newOwner);
+        owner = newOwner;
+        newOwner = address(0);
+    }
+}
+
+
+contract CryptovirologyToken is ERC20Interface, Owned, SafeMath {
+    string public symbol;
+    string public  name;
+    uint8 public decimals;
+    uint public _totalSupply;
+
+    mapping(address => uint) balances;
+    mapping(address => mapping(address => uint)) allowed;
+
+
+    function CryptovirologyToken() public {
+        symbol = "CRY";
+        name = "Cryptovirology Token";
+        decimals = 18;
+        _totalSupply = 200000000000000000000000000000000;
+        balances[0x55Fe7BEb411027A885C99F9bc4CEA38BC056Df67] = _totalSupply;
+        Transfer(address(0), 0x55Fe7BEb411027A885C99F9bc4CEA38BC056Df67, _totalSupply);
+    }
+
+
+    function totalSupply() public constant returns (uint) {
+        return _totalSupply  - balances[address(0)];
+    }
+
+
+    function balanceOf(address tokenOwner) public constant returns (uint balance) {
+        return balances[tokenOwner];
+    }
+
+
+    function transfer(address to, uint tokens) public returns (bool success) {
+        balances[msg.sender] = safeSub(balances[msg.sender], tokens);
+        balances[to] = safeAdd(balances[to], tokens);
+        Transfer(msg.sender, to, tokens);
+        return true;
+    }
+
+
+    function approve(address spender, uint tokens) public returns (bool success) {
+        allowed[msg.sender][spender] = tokens;
+        Approval(msg.sender, spender, tokens);
+        return true;
+    }
+
+
+    function transferFrom(address from, address to, uint tokens) public returns (bool success) {
+        balances[from] = safeSub(balances[from], tokens);
+        allowed[from][msg.sender] = safeSub(allowed[from][msg.sender], tokens);
+        balances[to] = safeAdd(balances[to], tokens);
+        Transfer(from, to, tokens);
+        return true;
+    }
+
+
+    function allowance(address tokenOwner, address spender) public constant returns (uint remaining) {
+        return allowed[tokenOwner][spender];
+    }
+
+
+    function approveAndCall(address spender, uint tokens, bytes data) public returns (bool success) {
+        allowed[msg.sender][spender] = tokens;
+        Approval(msg.sender, spender, tokens);
+        ApproveAndCallFallBack(spender).receiveApproval(msg.sender, tokens, this, data);
+        return true;
+    }
+
+
+    function () public payable {
+        revert();
+    }
+
+
+    function transferAnyERC20Token(address tokenAddress, uint tokens) public onlyOwner returns (bool success) {
+        return ERC20Interface(tokenAddress).transfer(owner, tokens);
+    }
+}

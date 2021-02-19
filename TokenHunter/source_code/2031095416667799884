@@ -1,0 +1,30 @@
+{{
+  "language": "Solidity",
+  "settings": {
+    "evmVersion": "petersburg",
+    "libraries": {},
+    "metadata": {
+      "useLiteralContent": true
+    },
+    "optimizer": {
+      "enabled": true,
+      "runs": 200
+    },
+    "remappings": [],
+    "outputSelection": {
+      "*": {
+        "*": [
+          "evm.bytecode",
+          "evm.deployedBytecode",
+          "abi"
+        ]
+      }
+    }
+  },
+  "sources": {
+    "src/AverageBlockTime.sol": {
+      "content": "pragma solidity 0.5.9;\n\ncontract AverageBlockTime {\n    struct Snapshot {\n        uint128 timestamp;\n        uint128 blockNumber;\n    }\n    Snapshot snapshot0;\n    Snapshot snapshot1;\n    uint256 minUpdateDelay;\n\n    constructor(uint256 _minUpdateDelay, uint128 _snapshotTimestamp, uint128 _snapshotBlockNumber) public {\n        require(block.timestamp - _snapshotTimestamp >= _minUpdateDelay, \"require an older snapshot\");\n        require(_snapshotBlockNumber < block.number, \"can't use a future snapshot\");\n        minUpdateDelay = _minUpdateDelay;\n        snapshot0.timestamp = _snapshotTimestamp;\n        snapshot0.blockNumber = _snapshotBlockNumber;\n    }\n\n    function update() external {\n        Snapshot memory _snapshot0 = snapshot0;\n        Snapshot memory _snapshot1 = snapshot1;\n        if(_snapshot0.timestamp > _snapshot1.timestamp) {\n            if(block.timestamp - _snapshot1.timestamp >= minUpdateDelay) {\n                snapshot1.timestamp = uint128(block.timestamp);\n                snapshot1.blockNumber = uint128(block.number);\n            }\n        } else {\n            if(block.timestamp - _snapshot0.timestamp >= minUpdateDelay) {\n                snapshot0.timestamp = uint128(block.timestamp);\n                snapshot0.blockNumber = uint128(block.number);\n            }\n        }\n    }\n\n    function getAverageBlockTimeInMicroSeconds() external view returns (uint256) {\n        Snapshot storage snapshot = snapshot0;\n        if(snapshot.timestamp > snapshot1.timestamp) {\n            if(block.timestamp - snapshot.timestamp < minUpdateDelay) {\n                snapshot = snapshot1;\n            }\n        } else {\n            if(block.timestamp - snapshot1.timestamp >= minUpdateDelay) {\n                snapshot = snapshot1;\n            }\n        }\n        return ((block.timestamp - snapshot.timestamp) * 1000) / (block.number - snapshot.blockNumber);\n    }\n}",
+      "keccak256": "0xc4125a97f1c27cfd931a1d72d641115a540a22454ea9bb363ce803f7011c9adc"
+    }
+  }
+}}

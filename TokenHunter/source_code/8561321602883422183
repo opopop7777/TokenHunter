@@ -1,0 +1,11 @@
+/**
+ *Submitted for verification at Etherscan.io on 2020-01-30
+*/
+
+pragma solidity ^0.5.0;
+
+// random
+
+contract SeeByteCodeForVariable {
+    uint256 public a = 1234;
+}
